@@ -2,9 +2,8 @@ name: Collect Air Quality Reading
 
 on:
   schedule:
-    # 8am PDT (15:00 UTC) and 8pm PDT (03:00 UTC next day)
-    - cron: "0 15 * * *"
-    - cron: "0 3 * * *"
+    # Every 3 hours (8x per day)
+    - cron: "0 */3 * * *"
   workflow_dispatch:
 
 jobs:
