@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Air Quality Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    header {
+      max-width: 960px;
+      margin: 0 auto 2rem;
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #f8fafc;
+      letter-spacing: -0.02em;
+    }
+
+    header p {
+      font-size: 0.85rem;
+      color: #64748b;
+      margin-top: 0.25rem;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      max-width: 960px;
+      margin: 0 auto 2.5rem;
+    }
+
+    .card {
+      background: #1e2330;
+      border: 1px solid #2d3748;
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+    }
+
+    .card .label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #64748b;
+      margin-bottom: 0.5rem;
+    }
+
+    .card .value {
+      font-size: 2.2rem;
+      font-weight: 700;
+      line-height: 1;
+      color: #f8fafc;
+    }
+
+    .card .unit {
+      font-size: 0.9rem;
+      color: #94a3b8;
+      margin-left: 0.25rem;
+    }
+
+    .card .updated {
+      font-size: 0.75rem;
+      color: #475569;
+      margin-top: 0.5rem;
+    }
+
+    /* CO2 color coding */
+    .co2-good   { color: #43a047; }
+    .co2-ok     { color: #87bc40; }
+    .co2-warn   { color: #f09d4f; }
+    .co2-bad    { color: #f2510a; }
+
+    .charts {
+      max-width: 960px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .chart-wrap {
+      background: #1e2330;
+      border: 1px solid #2d3748;
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem 1rem;
+    }
+
+    .chart-wrap h2 {
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #94a3b8;
+      margin-bottom: 1rem;
+    }
+
+    canvas { width: 100% !important; }
+
+    #status {
+      max-width: 960px;
+      margin: 2rem auto 0;
+      font-size: 0.78rem;
+      color: #475569;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Air Quality Dashboard</h1>
+  <p id="subtitle">Loading&hellip;</p>
+</header>
+
+<section class="cards">
+  <div class="card">
+    <div class="label">CO&thinsp;&#8322;</div>
+    <div><span class="value" id="val-co2">—</span><span class="unit">ppm</span></div>
+    <div class="updated" id="ts-co2"></div>
+  </div>
+  <div class="card">
+    <div class="label">Temperature</div>
+    <div><span class="value" id="val-temp">—</span><span class="unit">&deg;F</span></div>
+  </div>
+  <div class="card">
+    <div class="label">Humidity</div>
+    <div><span class="value" id="val-hum">—</span><span class="unit">%</span></div>
+  </div>
+</section>
+
+<section class="charts">
+  <div class="chart-wrap">
+    <h2>CO&thinsp;&#8322; Concentration (ppm)</h2>
+    <canvas id="chart-co2" height="120"></canvas>
+  </div>
+  <div class="chart-wrap">
+    <h2>Temperature (&deg;F)</h2>
+    <canvas id="chart-temp" height="120"></canvas>
+  </div>
+  <div class="chart-wrap">
+    <h2>Humidity (%)</h2>
+    <canvas id="chart-hum" height="120"></canvas>
+  </div>
+</section>
+
+<p id="status"></p>
+
+<script>
+  const DATA_URL = "data/readings.json";
+
+  const CHART_DEFAULTS = {
+    responsive: true,
+    animation: false,
+    plugins: { legend: { display: false }, tooltip: { mode: "index", intersect: false } },
+    scales: {
+      x: {
+        ticks: { color: "#64748b", maxTicksLimit: 10, maxRotation: 0 },
+        grid: { color: "#1a2035" },
+      },
+      y: {
+        ticks: { color: "#64748b" },
+        grid: { color: "#1a2035" },
+      },
+    },
+    elements: { point: { radius: 2, hoverRadius: 4 } },
+  };
+
+  function co2Class(ppm) {
+    if (ppm <= 800)  return "co2-good";
+    if (ppm <= 1000) return "co2-ok";
+    if (ppm <= 1500) return "co2-warn";
+    return "co2-bad";
+  }
+
+  function fmtTs(isoStr) {
+    const d = new Date(isoStr);
+    return d.toLocaleDateString(undefined, { month: "short", day: "numeric" }) + " " +
+           d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  }
+
+  function makeChart(id, labels, data, color, yLabel) {
+    const ctx = document.getElementById(id).getContext("2d");
+    return new Chart(ctx, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [{
+          data,
+          borderColor: color,
+          backgroundColor: color + "22",
+          borderWidth: 2,
+          fill: true,
+          tension: 0.3,
+        }],
+      },
+      options: {
+        ...CHART_DEFAULTS,
+        scales: {
+          ...CHART_DEFAULTS.scales,
+          y: { ...CHART_DEFAULTS.scales.y, title: { display: false } },
+        },
+      },
+    });
+  }
+
+  async function init() {
+    let readings;
+    try {
+      const res = await fetch(DATA_URL);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      readings = await res.json();
+    } catch (err) {
+      document.getElementById("status").textContent = `Could not load data: ${err.message}`;
+      return;
+    }
+
+    if (!readings.length) {
+      document.getElementById("subtitle").textContent = "No readings yet — check back after the first scheduled run.";
+      document.getElementById("status").textContent = "data/readings.json is empty.";
+      return;
+    }
+
+    const latest = readings[readings.length - 1];
+    const labels = readings.map(r => fmtTs(r.ts));
+    const co2s   = readings.map(r => r.co2);
+    const temps  = readings.map(r => r.temp_f);
+    const hums   = readings.map(r => r.humidity);
+
+    // Current value cards
+    const co2El = document.getElementById("val-co2");
+    co2El.textContent = latest.co2 ?? "—";
+    co2El.className = "value " + co2Class(latest.co2);
+    document.getElementById("val-temp").textContent = latest.temp_f != null ? latest.temp_f.toFixed(1) : "—";
+    document.getElementById("val-hum").textContent  = latest.humidity != null ? latest.humidity.toFixed(1) : "—";
+    document.getElementById("ts-co2").textContent   = `Last update: ${fmtTs(latest.ts)}`;
+
+    const count = readings.length;
+    document.getElementById("subtitle").textContent =
+      `${count} reading${count !== 1 ? "s" : ""} · updated twice daily`;
+
+    // Charts — using palette colors: Data set short
+    makeChart("chart-co2",  labels, co2s,  "#1A6BFF", "ppm");
+    makeChart("chart-temp", labels, temps, "#88A943", "°F");
+    makeChart("chart-hum",  labels, hums,  "#36A5CC", "%");
+
+    document.getElementById("status").textContent =
+      `Data: data/readings.json · ${count} readings · oldest: ${fmtTs(readings[0].ts)}`;
+  }
+
+  init();
+</script>
+</body>
+</html>
