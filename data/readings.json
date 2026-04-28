@@ -96,5 +96,12 @@
     "temp_f": 70.7,
     "humidity": 47.3,
     "online": true
+  },
+  {
+    "ts": "2026-04-28T19:25:03Z",
+    "co2": 535,
+    "temp_f": 70.7,
+    "humidity": 46,
+    "online": true
   }
 ]
