@@ -14,6 +14,7 @@ import argparse
 import json
 import os
 import sys
+import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -44,31 +45,48 @@ def _get_api_key() -> str:
 
 
 def fetch_reading() -> dict:
-    payload = {
-        "requestId": str(uuid.uuid4()),
-        "payload": {"sku": DEVICE_SKU, "device": DEVICE_ID},
-    }
-    headers = {
-        "Govee-API-Key": _get_api_key(),
-        "Content-Type": "application/json",
-    }
-    response = requests.post(API_URL, headers=headers, json=payload, timeout=15)
-    response.raise_for_status()
-    body = response.json()
+    max_retries = 3
+    retry_delay = 2
+    
+    for attempt in range(1, max_retries + 1):
+        try:
+            payload = {
+                "requestId": str(uuid.uuid4()),
+                "payload": {"sku": DEVICE_SKU, "device": DEVICE_ID},
+            }
+            headers = {
+                "Govee-API-Key": _get_api_key(),
+                "Content-Type": "application/json",
+            }
+            response = requests.post(API_URL, headers=headers, json=payload, timeout=15)
+            response.raise_for_status()
+            body = response.json()
 
-    if body.get("code") != 200:
-        print(f"ERROR: API returned code {body.get('code')}: {body.get('msg')}", file=sys.stderr)
-        sys.exit(1)
+            if body.get("code") != 200:
+                print(f"ERROR: API returned code {body.get('code')}: {body.get('msg')}", file=sys.stderr)
+                if attempt < max_retries:
+                    print(f"Retrying in {retry_delay}s... (attempt {attempt}/{max_retries})", file=sys.stderr)
+                    time.sleep(retry_delay)
+                    continue
+                sys.exit(1)
 
-    caps = {c["instance"]: c["state"]["value"] for c in body["payload"]["capabilities"]}
+            caps = {c["instance"]: c["state"]["value"] for c in body["payload"]["capabilities"]}
 
-    return {
-        "ts": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "co2": caps.get("carbonDioxideConcentration"),
-        "temp_f": caps.get("sensorTemperature"),
-        "humidity": caps.get("sensorHumidity"),
-        "online": caps.get("online", False),
-    }
+            return {
+                "ts": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "co2": caps.get("carbonDioxideConcentration"),
+                "temp_f": caps.get("sensorTemperature"),
+                "humidity": caps.get("sensorHumidity"),
+                "online": caps.get("online", False),
+            }
+        except (requests.exceptions.RequestException, json.JSONDecodeError, KeyError) as e:
+            print(f"Attempt {attempt}/{max_retries} failed: {type(e).__name__}: {e}", file=sys.stderr)
+            if attempt < max_retries:
+                print(f"Retrying in {retry_delay}s...", file=sys.stderr)
+                time.sleep(retry_delay)
+            else:
+                print(f"ERROR: Failed after {max_retries} attempts.", file=sys.stderr)
+                sys.exit(1)
 
 
 def append_reading(reading: dict) -> None:

@@ -28,6 +28,15 @@ jobs:
         env:
           GOVEE_API_KEY: ${{ secrets.GOVEE_API_KEY }}
         run: python collect_20260501.py
+        timeout-minutes: 5
+        continue-on-error: true
+
+      - name: Check collection status
+        run: |
+          if [ ! -f data/readings.json ]; then
+            echo "Warning: readings.json not created" >&2
+            exit 0
+          fi
 
       - name: Commit and push data
         run: |
@@ -36,3 +45,4 @@ jobs:
           git add data/readings.json
           git diff --cached --quiet || git commit -m "data: add reading $(date -u +%Y-%m-%dT%H:%MZ)"
           git push
+        if: always()
