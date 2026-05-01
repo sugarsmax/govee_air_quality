@@ -160,10 +160,23 @@
 <script>
   const DATA_URL = "data/readings.json";
 
+  // Data set short palette — pairs per chart: [device_1 color, device_2 color]
+  const CHART_COLORS = {
+    co2:  ["#1A6BFF", "#A80C7C"],
+    temp: ["#88A943", "#DBAE06"],
+    hum:  ["#36A5CC", "#008C4A"],
+  };
+
   const CHART_DEFAULTS = {
     responsive: true,
     animation: false,
-    plugins: { legend: { display: false }, tooltip: { mode: "index", intersect: false } },
+    plugins: {
+      legend: {
+        display: true,
+        labels: { color: "#94a3b8", boxWidth: 12, padding: 16 },
+      },
+      tooltip: { mode: "index", intersect: false },
+    },
     scales: {
       x: {
         ticks: { color: "#64748b", maxTicksLimit: 10, maxRotation: 0 },
@@ -190,28 +203,12 @@
            d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
   }
 
-  function makeChart(id, labels, data, color, yLabel) {
+  function makeChart(id, labels, datasets) {
     const ctx = document.getElementById(id).getContext("2d");
     return new Chart(ctx, {
       type: "line",
-      data: {
-        labels,
-        datasets: [{
-          data,
-          borderColor: color,
-          backgroundColor: color + "22",
-          borderWidth: 2,
-          fill: true,
-          tension: 0.3,
-        }],
-      },
-      options: {
-        ...CHART_DEFAULTS,
-        scales: {
-          ...CHART_DEFAULTS.scales,
-          y: { ...CHART_DEFAULTS.scales.y, title: { display: false } },
-        },
-      },
+      data: { labels, datasets },
+      options: CHART_DEFAULTS,
     });
   }
 
@@ -232,28 +229,57 @@
       return;
     }
 
-    const latest = readings[readings.length - 1];
-    const labels = readings.map(r => fmtTs(r.ts));
-    const co2s   = readings.map(r => r.co2);
-    const temps  = readings.map(r => r.temp_f);
-    const hums   = readings.map(r => r.humidity);
+    // Treat old records without a device field as device_1
+    readings.forEach(r => { if (!r.device) r.device = "device_1"; });
 
-    // Current value cards
+    // Sorted union of all timestamps as x-axis
+    const allTs = [...new Set(readings.map(r => r.ts))].sort();
+    const labels = allTs.map(fmtTs);
+
+    // Index readings by device → timestamp
+    const byDevice = {};
+    readings.forEach(r => {
+      if (!byDevice[r.device]) byDevice[r.device] = {};
+      byDevice[r.device][r.ts] = r;
+    });
+    const deviceKeys = Object.keys(byDevice).sort();
+
+    // Build per-device dataset aligned to allTs (null where no reading exists)
+    function deviceDatasets(field, colorPair) {
+      return deviceKeys.map((key, i) => ({
+        label: key,
+        data: allTs.map(ts => byDevice[key][ts]?.[field] ?? null),
+        borderColor: colorPair[i % colorPair.length],
+        backgroundColor: colorPair[i % colorPair.length] + "22",
+        borderWidth: 2,
+        fill: false,
+        tension: 0.3,
+        spanGaps: true,
+      }));
+    }
+
+    // Cards — show most recent reading from each device
+    const latestByDevice = {};
+    deviceKeys.forEach(key => {
+      const deviceTs = Object.keys(byDevice[key]).sort();
+      latestByDevice[key] = byDevice[key][deviceTs[deviceTs.length - 1]];
+    });
+    const primary = latestByDevice[deviceKeys[0]];
+
     const co2El = document.getElementById("val-co2");
-    co2El.textContent = latest.co2 ?? "—";
-    co2El.className = "value " + co2Class(latest.co2);
-    document.getElementById("val-temp").textContent = latest.temp_f != null ? latest.temp_f.toFixed(1) : "—";
-    document.getElementById("val-hum").textContent  = latest.humidity != null ? latest.humidity.toFixed(1) : "—";
-    document.getElementById("ts-co2").textContent   = `Last update: ${fmtTs(latest.ts)}`;
+    co2El.textContent = primary.co2 ?? "—";
+    co2El.className = "value " + co2Class(primary.co2);
+    document.getElementById("val-temp").textContent = primary.temp_f != null ? primary.temp_f.toFixed(1) : "—";
+    document.getElementById("val-hum").textContent  = primary.humidity != null ? primary.humidity.toFixed(1) : "—";
+    document.getElementById("ts-co2").textContent   = `Last update: ${fmtTs(primary.ts)} · ${deviceKeys[0]}`;
 
     const count = readings.length;
     document.getElementById("subtitle").textContent =
-      `${count} reading${count !== 1 ? "s" : ""} · updated twice daily`;
+      `${count} reading${count !== 1 ? "s" : ""} · ${deviceKeys.length} device${deviceKeys.length !== 1 ? "s" : ""} · updated every 3 hours`;
 
-    // Charts — using palette colors: Data set short
-    makeChart("chart-co2",  labels, co2s,  "#1A6BFF", "ppm");
-    makeChart("chart-temp", labels, temps, "#88A943", "°F");
-    makeChart("chart-hum",  labels, hums,  "#36A5CC", "%");
+    makeChart("chart-co2",  labels, deviceDatasets("co2",      CHART_COLORS.co2));
+    makeChart("chart-temp", labels, deviceDatasets("temp_f",   CHART_COLORS.temp));
+    makeChart("chart-hum",  labels, deviceDatasets("humidity", CHART_COLORS.hum));
 
     document.getElementById("status").textContent =
       `Data: data/readings.json · ${count} readings · oldest: ${fmtTs(readings[0].ts)}`;
