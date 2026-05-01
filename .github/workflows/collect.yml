@@ -27,7 +27,7 @@ jobs:
       - name: Collect reading
         env:
           GOVEE_API_KEY: ${{ secrets.GOVEE_API_KEY }}
-        run: python collect_20260426.py
+        run: python collect_20260501.py
 
       - name: Commit and push data
         run: |
