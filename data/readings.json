@@ -279,5 +279,13 @@
     "humidity": 50,
     "online": true,
     "device": "device_1"
+  },
+  {
+    "ts": "2026-05-02T00:13:25Z",
+    "co2": 471,
+    "temp_f": 71.78,
+    "humidity": 48.4,
+    "online": true,
+    "device": "device_1"
   }
 ]
