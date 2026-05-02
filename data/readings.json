@@ -4,273 +4,312 @@
     "co2": 845,
     "temp_f": 71.24,
     "humidity": 43,
-    "online": true
+    "online": true,
+    "device": "basement"
   },
   {
     "ts": "2026-04-27T02:08:49Z",
     "co2": 994,
     "temp_f": 71.96,
     "humidity": 40.2,
-    "online": true
+    "online": true,
+    "device": "basement"
   },
   {
     "ts": "2026-04-27T05:48:02Z",
     "co2": 847,
     "temp_f": 70.7,
     "humidity": 42.3,
-    "online": true
+    "online": true,
+    "device": "basement"
   },
   {
     "ts": "2026-04-27T08:11:10Z",
     "co2": 689,
     "temp_f": 69.98,
     "humidity": 43.5,
-    "online": true
+    "online": true,
+    "device": "basement"
   },
   {
     "ts": "2026-04-27T10:56:48Z",
     "co2": 613,
     "temp_f": 69.8,
     "humidity": 43.5,
-    "online": true
+    "online": true,
+    "device": "basement"
   },
   {
     "ts": "2026-04-27T13:25:30Z",
     "co2": 660,
     "temp_f": 70.7,
     "humidity": 42.8,
-    "online": true
+    "online": true,
+    "device": "basement"
   },
   {
     "ts": "2026-04-27T16:22:43Z",
     "co2": 451,
     "temp_f": 67.28,
     "humidity": 46.8,
-    "online": true
+    "online": true,
+    "device": "basement"
   },
   {
     "ts": "2026-04-27T19:08:53Z",
     "co2": 481,
     "temp_f": 68.72,
     "humidity": 45,
-    "online": true
+    "online": true,
+    "device": "basement"
   },
   {
     "ts": "2026-04-27T21:50:28Z",
     "co2": 656,
     "temp_f": 69.62,
     "humidity": 46.2,
-    "online": true
+    "online": true,
+    "device": "basement"
   },
   {
     "ts": "2026-04-28T02:15:02Z",
     "co2": 909,
     "temp_f": 70.16,
     "humidity": 46.3,
-    "online": true
+    "online": true,
+    "device": "basement"
   },
   {
     "ts": "2026-04-28T05:53:33Z",
     "co2": 770,
     "temp_f": 69.44,
     "humidity": 47,
-    "online": true
+    "online": true,
+    "device": "basement"
   },
   {
     "ts": "2026-04-28T08:13:17Z",
     "co2": 721,
     "temp_f": 69.08,
     "humidity": 47.2,
-    "online": true
+    "online": true,
+    "device": "basement"
   },
   {
     "ts": "2026-04-28T10:59:13Z",
     "co2": 694,
     "temp_f": 69.44,
     "humidity": 46.7,
-    "online": true
+    "online": true,
+    "device": "basement"
   },
   {
     "ts": "2026-04-28T16:48:22Z",
     "co2": 678,
     "temp_f": 70.7,
     "humidity": 47.3,
-    "online": true
+    "online": true,
+    "device": "basement"
   },
   {
     "ts": "2026-04-28T19:25:03Z",
     "co2": 535,
     "temp_f": 70.7,
     "humidity": 46,
-    "online": true
+    "online": true,
+    "device": "basement"
   },
   {
     "ts": "2026-04-28T21:52:18Z",
     "co2": 476,
     "temp_f": 70.52,
     "humidity": 45.2,
-    "online": true
+    "online": true,
+    "device": "basement"
   },
   {
     "ts": "2026-04-29T02:24:47Z",
     "co2": 534,
     "temp_f": 69.98,
     "humidity": 45.7,
-    "online": true
+    "online": true,
+    "device": "basement"
   },
   {
     "ts": "2026-04-29T05:48:48Z",
     "co2": 606,
     "temp_f": 69.8,
     "humidity": 47.5,
-    "online": true
+    "online": true,
+    "device": "basement"
   },
   {
     "ts": "2026-04-29T08:06:12Z",
     "co2": 593,
     "temp_f": 69.44,
     "humidity": 48.3,
-    "online": true
+    "online": true,
+    "device": "basement"
   },
   {
     "ts": "2026-04-29T10:49:51Z",
     "co2": 606,
     "temp_f": 69.98,
     "humidity": 47.7,
-    "online": true
+    "online": true,
+    "device": "basement"
   },
   {
     "ts": "2026-04-29T13:30:02Z",
     "co2": 660,
     "temp_f": 70.7,
     "humidity": 46.3,
-    "online": true
+    "online": true,
+    "device": "basement"
   },
   {
     "ts": "2026-04-29T16:24:55Z",
     "co2": 700,
     "temp_f": 71.78,
     "humidity": 45.3,
-    "online": true
+    "online": true,
+    "device": "basement"
   },
   {
     "ts": "2026-04-29T19:15:13Z",
     "co2": 535,
     "temp_f": 70.88,
     "humidity": 44.8,
-    "online": true
+    "online": true,
+    "device": "basement"
   },
   {
     "ts": "2026-04-29T21:55:11Z",
     "co2": 535,
     "temp_f": 70.34,
     "humidity": 46,
-    "online": true
+    "online": true,
+    "device": "basement"
   },
   {
     "ts": "2026-04-30T02:25:41Z",
     "co2": 508,
     "temp_f": 70.7,
     "humidity": 45.6,
-    "online": true
+    "online": true,
+    "device": "basement"
   },
   {
     "ts": "2026-04-30T05:52:50Z",
     "co2": 546,
     "temp_f": 70.52,
     "humidity": 47.7,
-    "online": true
+    "online": true,
+    "device": "basement"
   },
   {
     "ts": "2026-04-30T08:10:25Z",
     "co2": 532,
     "temp_f": 70.16,
     "humidity": 47.6,
-    "online": true
+    "online": true,
+    "device": "basement"
   },
   {
     "ts": "2026-04-30T10:49:52Z",
     "co2": 505,
     "temp_f": 69.8,
     "humidity": 47.5,
-    "online": true
+    "online": true,
+    "device": "basement"
   },
   {
     "ts": "2026-04-30T13:27:47Z",
     "co2": 577,
     "temp_f": 69.8,
     "humidity": 47.4,
-    "online": true
+    "online": true,
+    "device": "basement"
   },
   {
     "ts": "2026-04-30T16:15:18Z",
     "co2": 684,
     "temp_f": 70.52,
     "humidity": 47.4,
-    "online": true
+    "online": true,
+    "device": "basement"
   },
   {
     "ts": "2026-04-30T19:10:48Z",
     "co2": 710,
     "temp_f": 71.42,
     "humidity": 49.7,
-    "online": true
+    "online": true,
+    "device": "basement"
   },
   {
     "ts": "2026-04-30T21:52:19Z",
     "co2": 814,
     "temp_f": 71.24,
     "humidity": 48.8,
-    "online": true
+    "online": true,
+    "device": "basement"
   },
   {
     "ts": "2026-05-01T02:30:28Z",
     "co2": 548,
     "temp_f": 71.78,
     "humidity": 46.5,
-    "online": true
+    "online": true,
+    "device": "basement"
   },
   {
     "ts": "2026-05-01T06:10:24Z",
     "co2": 573,
     "temp_f": 70.34,
     "humidity": 48.1,
-    "online": true
+    "online": true,
+    "device": "basement"
   },
   {
     "ts": "2026-05-01T10:19:02Z",
     "co2": 553,
     "temp_f": 70.34,
     "humidity": 48.9,
-    "online": true
+    "online": true,
+    "device": "basement"
   },
   {
     "ts": "2026-05-01T13:05:40Z",
     "co2": 551,
     "temp_f": 70.16,
     "humidity": 49.1,
-    "online": true
+    "online": true,
+    "device": "basement"
   },
   {
     "ts": "2026-05-01T15:50:59Z",
     "co2": 451,
     "temp_f": 68.72,
     "humidity": 51.4,
-    "online": true
+    "online": true,
+    "device": "basement"
   },
   {
     "ts": "2026-05-01T19:02:42Z",
     "co2": 420,
     "temp_f": 68.9,
     "humidity": 52.7,
-    "online": true
+    "online": true,
+    "device": "basement"
   },
   {
     "ts": "2026-05-01T21:46:07Z",
     "co2": 460,
     "temp_f": 70.88,
     "humidity": 50.2,
-    "online": true
+    "online": true,
+    "device": "basement"
   },
   {
     "ts": "2026-05-01T23:04:50Z",
@@ -278,7 +317,7 @@
     "temp_f": 71.24,
     "humidity": 50,
     "online": true,
-    "device": "device_1"
+    "device": "basement"
   },
   {
     "ts": "2026-05-02T00:13:25Z",
@@ -286,6 +325,6 @@
     "temp_f": 71.78,
     "humidity": 48.4,
     "online": true,
-    "device": "device_1"
+    "device": "basement"
   }
 ]

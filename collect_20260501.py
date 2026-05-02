@@ -29,14 +29,14 @@ import requests
 # ---------------------------------------------------------------------------
 DEVICES = [
     {
-        "label": "device_1",
+        "label": "basement",
         "sku": "H5140",
         "device": "53:8C:0C:4E:A0:DA:0C:0C",
     },
     {
-        "label": "device_2",
+        "label": "upstairs",
         "sku": "H5140",
-        "device": "3C:0F:02:26:96:00",
+        "device": "17:A0:3C:0F:02:26:96:00",
     },
 ]
 
