@@ -229,16 +229,20 @@
       return;
     }
 
-    // Treat old records without a device field as device_1
-    readings.forEach(r => { if (!r.device) r.device = "device_1"; });
+    // Treat old records without a device field as basement
+    readings.forEach(r => { if (!r.device) r.device = "basement"; });
+
+    // Filter to last 14 days for the charts
+    const cutoff = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+    const chartReadings = readings.filter(r => r.ts >= cutoff);
 
     // Sorted union of all timestamps as x-axis
-    const allTs = [...new Set(readings.map(r => r.ts))].sort();
+    const allTs = [...new Set(chartReadings.map(r => r.ts))].sort();
     const labels = allTs.map(fmtTs);
 
-    // Index readings by device → timestamp
+    // Index chart readings by device → timestamp
     const byDevice = {};
-    readings.forEach(r => {
+    chartReadings.forEach(r => {
       if (!byDevice[r.device]) byDevice[r.device] = {};
       byDevice[r.device][r.ts] = r;
     });
@@ -282,7 +286,7 @@
     makeChart("chart-hum",  labels, deviceDatasets("humidity", CHART_COLORS.hum));
 
     document.getElementById("status").textContent =
-      `Data: data/readings.json · ${count} readings · oldest: ${fmtTs(readings[0].ts)}`;
+      `Data: data/readings.json · ${count} total readings · charts show last 14 days`;
   }
 
   init();
