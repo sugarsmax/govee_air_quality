@@ -142,16 +142,16 @@
 
 <section class="charts">
   <div class="chart-wrap">
-    <h2>CO&thinsp;&#8322; Concentration (ppm)</h2>
-    <canvas id="chart-co2" height="120"></canvas>
+    <h2>Temperature (&deg;F)</h2>
+    <canvas id="chart-temp" height="240"></canvas>
   </div>
   <div class="chart-wrap">
-    <h2>Temperature (&deg;F)</h2>
-    <canvas id="chart-temp" height="120"></canvas>
+    <h2>CO&thinsp;&#8322; Concentration (ppm)</h2>
+    <canvas id="chart-co2" height="240"></canvas>
   </div>
   <div class="chart-wrap">
     <h2>Humidity (%)</h2>
-    <canvas id="chart-hum" height="120"></canvas>
+    <canvas id="chart-hum" height="240"></canvas>
   </div>
 </section>
 
@@ -159,6 +159,36 @@
 
 <script>
   const DATA_URL = "data/readings.json";
+
+  // Plugin to display value label at the final data point
+  const finalPointLabelPlugin = {
+    id: "finalPointLabel",
+    afterDatasetsDraw(chart) {
+      const { ctx, data, chartArea } = chart;
+      ctx.save();
+
+      data.datasets.forEach((dataset, datasetIdx) => {
+        const meta = chart.getDatasetMeta(datasetIdx);
+        const lastIndex = dataset.data.length - 1;
+        const lastElement = meta.data[lastIndex];
+
+        if (lastElement && dataset.data[lastIndex] != null) {
+          const value = dataset.data[lastIndex];
+          const label = typeof value === "number" ? value.toFixed(1) : String(value);
+          const x = lastElement.x + 8;
+          const y = lastElement.y;
+
+          ctx.font = "12px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+          ctx.fillStyle = dataset.borderColor;
+          ctx.textAlign = "left";
+          ctx.textBaseline = "middle";
+          ctx.fillText(label, x, y);
+        }
+      });
+
+      ctx.restore();
+    }
+  };
 
   // Data set short palette — pairs per chart: [device_1 color, device_2 color]
   const CHART_COLORS = {
@@ -209,6 +239,7 @@
       type: "line",
       data: { labels, datasets },
       options: CHART_DEFAULTS,
+      plugins: [finalPointLabelPlugin],
     });
   }
 
