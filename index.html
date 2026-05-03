@@ -160,32 +160,41 @@
 <script>
   const DATA_URL = "data/readings.json";
 
-  // Plugin to display value label at the final data point
-  const finalPointLabelPlugin = {
-    id: "finalPointLabel",
-    afterDatasetsDraw(chart) {
-      const { ctx, data, chartArea } = chart;
+
+  // Plugin to draw alternating-day background bands
+  const dayBandPlugin = {
+    id: "dayBand",
+    beforeDatasetsDraw(chart) {
+      const { ctx, chartArea, scales } = chart;
+      const timestamps = chart.options.plugins.dayBand?.timestamps;
+      if (!timestamps || !timestamps.length) return;
+
       ctx.save();
+      let dayIndex = 0;
+      let bandStart = null;
+      let lastDay = null;
 
-      data.datasets.forEach((dataset, datasetIdx) => {
-        const meta = chart.getDatasetMeta(datasetIdx);
-        const lastIndex = dataset.data.length - 1;
-        const lastElement = meta.data[lastIndex];
-
-        if (lastElement && dataset.data[lastIndex] != null) {
-          const value = dataset.data[lastIndex];
-          const label = typeof value === "number" ? value.toFixed(1) : String(value);
-          const x = lastElement.x + 8;
-          const y = lastElement.y;
-
-          ctx.font = "12px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
-          ctx.fillStyle = dataset.borderColor;
-          ctx.textAlign = "left";
-          ctx.textBaseline = "middle";
-          ctx.fillText(label, x, y);
+      timestamps.forEach((ts, i) => {
+        const day = new Date(ts).toDateString();
+        if (day !== lastDay) {
+          if (bandStart !== null && dayIndex % 2 === 1) {
+            const x0 = scales.x.getPixelForValue(bandStart);
+            const x1 = scales.x.getPixelForValue(i - 1);
+            ctx.fillStyle = "rgba(255,255,255,0.03)";
+            ctx.fillRect(x0, chartArea.top, x1 - x0, chartArea.bottom - chartArea.top);
+          }
+          bandStart = i;
+          dayIndex++;
+          lastDay = day;
         }
       });
 
+      // Close the final band
+      if (bandStart !== null && dayIndex % 2 === 1) {
+        const x0 = scales.x.getPixelForValue(bandStart);
+        ctx.fillStyle = "rgba(255,255,255,0.03)";
+        ctx.fillRect(x0, chartArea.top, chartArea.right - x0, chartArea.bottom - chartArea.top);
+      }
       ctx.restore();
     }
   };
@@ -209,10 +218,20 @@
     },
     scales: {
       x: {
-        ticks: { color: "#64748b", maxTicksLimit: 10, maxRotation: 0 },
+        ticks: {
+          color: "#64748b",
+          maxRotation: 0,
+          autoSkip: false,
+          callback(value, index) {
+            const labels = this.chart.data.labels;
+            if (index === 0) return labels[0];
+            return labels[index] !== labels[index - 1] ? labels[index] : "";
+          },
+        },
         grid: { color: "#1a2035" },
       },
       y: {
+        position: "right",
         ticks: { color: "#64748b" },
         grid: { color: "#1a2035" },
       },
@@ -233,13 +252,24 @@
            d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
   }
 
-  function makeChart(id, labels, datasets) {
+  function fmtLabel(isoStr) {
+    const d = new Date(isoStr);
+    return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  }
+
+  function makeChart(id, labels, datasets, timestamps) {
     const ctx = document.getElementById(id).getContext("2d");
     return new Chart(ctx, {
       type: "line",
       data: { labels, datasets },
-      options: CHART_DEFAULTS,
-      plugins: [finalPointLabelPlugin],
+      options: {
+        ...CHART_DEFAULTS,
+        plugins: {
+          ...CHART_DEFAULTS.plugins,
+          dayBand: { timestamps },
+        },
+      },
+      plugins: [dayBandPlugin],
     });
   }
 
@@ -269,7 +299,7 @@
 
     // Sorted union of all timestamps as x-axis
     const allTs = [...new Set(chartReadings.map(r => r.ts))].sort();
-    const labels = allTs.map(fmtTs);
+    const labels = allTs.map(fmtLabel);
 
     // Index chart readings by device → timestamp
     const byDevice = {};
@@ -312,9 +342,9 @@
     document.getElementById("subtitle").textContent =
       `${count} reading${count !== 1 ? "s" : ""} · ${deviceKeys.length} device${deviceKeys.length !== 1 ? "s" : ""} · updated every 3 hours`;
 
-    makeChart("chart-co2",  labels, deviceDatasets("co2",      CHART_COLORS.co2));
-    makeChart("chart-temp", labels, deviceDatasets("temp_f",   CHART_COLORS.temp));
-    makeChart("chart-hum",  labels, deviceDatasets("humidity", CHART_COLORS.hum));
+    makeChart("chart-co2",  labels, deviceDatasets("co2",      CHART_COLORS.co2),  allTs);
+    makeChart("chart-temp", labels, deviceDatasets("temp_f",   CHART_COLORS.temp), allTs);
+    makeChart("chart-hum",  labels, deviceDatasets("humidity", CHART_COLORS.hum),  allTs);
 
     document.getElementById("status").textContent =
       `Data: data/readings.json · ${count} total readings · charts show last 14 days`;
