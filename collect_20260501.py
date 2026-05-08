@@ -17,6 +17,7 @@ import argparse
 import json
 import os
 import sys
+import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -61,32 +62,45 @@ def _get_api_key() -> str:
     return key
 
 
-def fetch_reading(sku: str, device_id: str, api_key: str) -> dict:
-    """POST to the Govee Open API and return a parsed sensor reading."""
-    payload = {
-        "requestId": str(uuid.uuid4()),
-        "payload": {"sku": sku, "device": device_id},
-    }
+def fetch_reading(sku: str, device_id: str, api_key: str, max_retries: int = 3) -> dict:
+    """POST to the Govee Open API and return a parsed sensor reading.
+
+    Retries up to max_retries times with exponential backoff on network errors.
+    """
     headers = {
         "Govee-API-Key": api_key,
         "Content-Type": "application/json",
     }
-    response = requests.post(API_URL, headers=headers, json=payload, timeout=15)
-    response.raise_for_status()
-    body = response.json()
+    last_exc: Exception = RuntimeError("No attempts made")
+    for attempt in range(1, max_retries + 1):
+        try:
+            payload = {
+                "requestId": str(uuid.uuid4()),
+                "payload": {"sku": sku, "device": device_id},
+            }
+            response = requests.post(API_URL, headers=headers, json=payload, timeout=30)
+            response.raise_for_status()
+            body = response.json()
 
-    if body.get("code") != 200:
-        raise RuntimeError(f"API returned code {body.get('code')}: {body.get('msg')}")
+            if body.get("code") != 200:
+                raise RuntimeError(f"API returned code {body.get('code')}: {body.get('msg')}")
 
-    caps = {c["instance"]: c["state"]["value"] for c in body["payload"]["capabilities"]}
+            caps = {c["instance"]: c["state"]["value"] for c in body["payload"]["capabilities"]}
 
-    return {
-        "ts": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "co2": caps.get("carbonDioxideConcentration"),
-        "temp_f": caps.get("sensorTemperature"),
-        "humidity": caps.get("sensorHumidity"),
-        "online": caps.get("online", False),
-    }
+            return {
+                "ts": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "co2": caps.get("carbonDioxideConcentration"),
+                "temp_f": caps.get("sensorTemperature"),
+                "humidity": caps.get("sensorHumidity"),
+                "online": caps.get("online", False),
+            }
+        except (requests.exceptions.RequestException, json.JSONDecodeError, KeyError) as exc:
+            last_exc = exc
+            if attempt < max_retries:
+                delay = 2 ** attempt
+                print(f"  attempt {attempt}/{max_retries} failed ({exc}), retrying in {delay}s…", file=sys.stderr)
+                time.sleep(delay)
+    raise last_exc
 
 
 def append_reading(reading: dict) -> None:
