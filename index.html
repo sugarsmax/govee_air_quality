@@ -112,8 +112,9 @@
       max-width: 960px;
       margin: 2rem auto 0;
       font-size: 0.78rem;
-      color: #475569;
+      color: #e74c3c;
       text-align: center;
+      min-height: 1.5rem;
     }
   </style>
 </head>
@@ -160,6 +161,17 @@
 <script>
   const DATA_URL = "data/readings.json";
 
+  // Detect if running over file:// protocol and provide instructions
+  if (window.location.protocol === 'file:') {
+    document.addEventListener('DOMContentLoaded', () => {
+      const subtitle = document.getElementById('subtitle');
+      const status = document.getElementById('status');
+      const msg = 'This dashboard must be served over HTTP to work. Open a terminal in this directory and run: python3 -m http.server 8000';
+      subtitle.textContent = msg;
+      status.textContent = msg;
+      subtitle.style.color = '#e74c3c';
+    });
+  }
 
   // Plugin to draw alternating-day background bands
   const dayBandPlugin = {
@@ -277,16 +289,19 @@
     let readings;
     try {
       const res = await fetch(DATA_URL);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
       readings = await res.json();
     } catch (err) {
-      document.getElementById("status").textContent = `Could not load data: ${err.message}`;
+      const errMsg = `Could not load data: ${err.message}`;
+      console.error(errMsg, err);
+      document.getElementById("subtitle").textContent = errMsg;
+      document.getElementById("status").textContent = errMsg;
       return;
     }
 
-    if (!readings.length) {
+    if (!readings || !Array.isArray(readings) || readings.length === 0) {
       document.getElementById("subtitle").textContent = "No readings yet — check back after the first scheduled run.";
-      document.getElementById("status").textContent = "data/readings.json is empty.";
+      document.getElementById("status").textContent = "data/readings.json is empty or not an array.";
       return;
     }
 
