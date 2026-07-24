@@ -218,6 +218,23 @@
     hum:  ["#36A5CC", "#008C4A"],
   };
 
+  const MAX_X_LABELS = 12;
+
+  // Pick indices for the first occurrence of each day, then thin them out
+  // so at most MAX_X_LABELS are shown, spaced as evenly as possible.
+  function computeVisibleLabelIndices(labels, maxLabels) {
+    const dayStartIndices = [];
+    labels.forEach((label, i) => {
+      if (i === 0 || label !== labels[i - 1]) dayStartIndices.push(i);
+    });
+    const stride = Math.max(1, Math.ceil(dayStartIndices.length / maxLabels));
+    const visible = new Set();
+    for (let i = 0; i < dayStartIndices.length; i += stride) {
+      visible.add(dayStartIndices[i]);
+    }
+    return visible;
+  }
+
   const CHART_DEFAULTS = {
     responsive: true,
     animation: false,
@@ -235,9 +252,11 @@
           maxRotation: 0,
           autoSkip: false,
           callback(value, index) {
-            const labels = this.chart.data.labels;
-            if (index === 0) return labels[0];
-            return labels[index] !== labels[index - 1] ? labels[index] : "";
+            const chart = this.chart;
+            if (!chart._visibleLabelIndices) {
+              chart._visibleLabelIndices = computeVisibleLabelIndices(chart.data.labels, MAX_X_LABELS);
+            }
+            return chart._visibleLabelIndices.has(index) ? chart.data.labels[index] : "";
           },
         },
         grid: { color: "#1a2035" },
@@ -308,9 +327,15 @@
     // Treat old records without a device field as basement
     readings.forEach(r => { if (!r.device) r.device = "basement"; });
 
-    // Filter to last 14 days for the charts
+    // Filter to last 14 days for the charts, or all data if less than 14 days available
     const cutoff = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
-    const chartReadings = readings.filter(r => r.ts >= cutoff);
+    let chartReadings = readings.filter(r => r.ts >= cutoff);
+    
+    // If no readings in last 14 days, use all available data
+    if (chartReadings.length === 0) {
+      console.warn('No data in last 14 days, using all available readings');
+      chartReadings = readings;
+    }
 
     // Sorted union of all timestamps as x-axis
     const allTs = [...new Set(chartReadings.map(r => r.ts))].sort();
@@ -354,6 +379,9 @@
     document.getElementById("ts-co2").textContent   = `Last update: ${fmtTs(primary.ts)} · ${deviceKeys[0]}`;
 
     const count = readings.length;
+    const timeRange = chartReadings.length === readings.length 
+      ? `all ${chartReadings.length} readings`
+      : 'last 14 days';
     document.getElementById("subtitle").textContent =
       `${count} reading${count !== 1 ? "s" : ""} · ${deviceKeys.length} device${deviceKeys.length !== 1 ? "s" : ""} · updated every 3 hours`;
 
@@ -362,10 +390,13 @@
     makeChart("chart-hum",  labels, deviceDatasets("humidity", CHART_COLORS.hum),  allTs);
 
     document.getElementById("status").textContent =
-      `Data: data/readings.json · ${count} total readings · charts show last 14 days`;
+      `Data: data/readings.json · ${count} total readings · charts show ${timeRange}`;
   }
 
-  init();
+  init().catch(err => {
+    console.error('Fatal error in init():', err);
+    document.getElementById("status").textContent = 'Fatal error: ' + err.message;
+  });
 </script>
 </body>
 </html>
