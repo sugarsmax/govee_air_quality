@@ -11926,5 +11926,21 @@
     "humidity": 48.9,
     "online": true,
     "device": "upstairs"
+  },
+  {
+    "ts": "2026-10-28T22:04:30Z",
+    "co2": 518,
+    "temp_f": 70.16,
+    "humidity": 52.2,
+    "online": true,
+    "device": "basement"
+  },
+  {
+    "ts": "2026-10-28T22:04:30Z",
+    "co2": 530,
+    "temp_f": 71.06,
+    "humidity": 48.3,
+    "online": true,
+    "device": "upstairs"
   }
 ]
